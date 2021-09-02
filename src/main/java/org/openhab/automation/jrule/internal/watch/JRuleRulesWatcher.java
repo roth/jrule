@@ -17,14 +17,9 @@ import static java.nio.file.StandardWatchEventKinds.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
-import java.nio.file.FileSystem;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardWatchEventKinds;
-import java.nio.file.WatchEvent;
+import java.nio.file.*;
 import java.nio.file.WatchEvent.Kind;
-import java.nio.file.WatchKey;
-import java.nio.file.WatchService;
+import java.nio.file.attribute.BasicFileAttributes;
 
 import org.openhab.automation.jrule.internal.JRuleConstants;
 import org.slf4j.Logger;
@@ -41,7 +36,7 @@ public class JRuleRulesWatcher implements Runnable {
 
     private final Path watchFolder;
 
-    private final Logger logger = LoggerFactory.getLogger(JRuleRulesWatcher.class);
+    private static final Logger logger = LoggerFactory.getLogger(JRuleRulesWatcher.class);
 
     public static final String PROPERTY_ENTRY_CREATE = "ENTRY_CREATE";
     public static final String PROPERTY_ENTRY_MODIFY = "ENTRY_MODIFY";
@@ -80,13 +75,12 @@ public class JRuleRulesWatcher implements Runnable {
         logger.debug("Watching for rule changes: {}", watchFolder);
         FileSystem fs = watchFolder.getFileSystem();
         try {
-            WatchService service = fs.newWatchService();
-            watchFolder.register(service, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_DELETE,
-                    StandardWatchEventKinds.ENTRY_MODIFY);
+            WatchService watchService = fs.newWatchService();
+            registerFileWatchServiceRecursively(watchFolder, watchService);
 
             WatchKey key = null;
-            while (true) {
-                key = service.take();
+            do {
+                key = watchService.take();
                 Kind<?> kind = null;
                 for (WatchEvent<?> watchEvent : key.pollEvents()) {
                     kind = watchEvent.kind();
@@ -111,16 +105,29 @@ public class JRuleRulesWatcher implements Runnable {
                         logger.debug("Unhandled case: {}", kind.name());
                     }
                 }
-                if (!key.reset()) {
-                    break;
-                }
-            }
+            } while (key.reset());
         } catch (InterruptedException e) {
             logger.debug("Watcher Thread interrupted, closing down");
             return;
         } catch (Exception e) {
             logger.error("Folder watcher terminated due to exception", e);
             return;
+        }
+    }
+
+    private static void registerFileWatchServiceRecursively(Path baseFolder, WatchService watchService) {
+        try {
+            Files.walkFileTree(baseFolder, new SimpleFileVisitor<>() {
+                @Override
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                    logger.debug("registering " + dir + " in watcher service");
+                    dir.register(watchService, StandardWatchEventKinds.ENTRY_CREATE,
+                            StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_MODIFY);
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        } catch (IOException e) {
+            logger.error("registering folder watch service failed. ", e);
         }
     }
 }

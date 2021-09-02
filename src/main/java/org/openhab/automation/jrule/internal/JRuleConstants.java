@@ -23,8 +23,10 @@ import org.eclipse.jdt.annotation.NonNullByDefault;
 @NonNullByDefault
 public class JRuleConstants {
     public static final String JRULE_GENERATION_PREFIX = "_";
-    public static final String JAVA_FILE_TYPE = ".java";
-    public static final String CLASS_FILE_TYPE = ".class";
+    public static final String JAVA_FILE_EXTENSION = "java";
+    public static final String CLASS_FILE_EXTENSION = "class";
+    public static final String JAVA_FILE_TYPE = "." + JAVA_FILE_EXTENSION;
+    public static final String CLASS_FILE_TYPE = "." + CLASS_FILE_EXTENSION;
     public static final String EMPTY = "";
     public static final String JAR_FILE_TYPE = ".jar";
 }

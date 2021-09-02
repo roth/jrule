@@ -44,6 +44,8 @@ public class JRuleConfig {
 
     private static final String CLASS_DIR = "class";
 
+    private static final String RULE_CLASSES_DIR = "rule-classes";
+
     private static final String EXT_LIB_DIR = "ext-lib";
 
     private final Map<String, Object> properties;
@@ -57,8 +59,9 @@ public class JRuleConfig {
         return workingDir == null ? DEFAULT_WORKING_DIR : workingDir;
     }
 
-    public String getClassDirectory() {
-        return new StringBuilder().append(getWorkingDirectory()).append(File.separator).append(CLASS_DIR).toString();
+    public String getRuleClassesDirectory() {
+        return new StringBuilder().append(getWorkingDirectory()).append(File.separator).append(RULE_CLASSES_DIR)
+                .toString();
     }
 
     public String getItemsDirectory() {

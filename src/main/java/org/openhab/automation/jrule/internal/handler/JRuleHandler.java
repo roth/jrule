@@ -59,8 +59,6 @@ import org.slf4j.LoggerFactory;
 @NonNullByDefault
 public class JRuleHandler implements PropertyChangeListener {
 
-    private static final String JAR_LIB_PATH = "lib/";
-
     @NonNullByDefault({})
     private ItemRegistry itemRegistry;
 
@@ -115,12 +113,13 @@ public class JRuleHandler implements PropertyChangeListener {
         try {
             urlList.add(new File(config.getItemsRootDirectory()).toURI().toURL());
             urlList.add(new File(config.getRulesRootDirectory()).toURI().toURL());
+            urlList.add(new File(config.getRuleClassesDirectory()).toURI().toURL());
         } catch (MalformedURLException x) {
             logger.error("Failed to build class path for creating rule instance");
         }
         urlList.addAll(extLibPath);
         final ClassLoader loader = new URLClassLoader(urlList.toArray(URL[]::new), JRuleUtil.class.getClassLoader());
-        compiler.loadClasses(loader, new File(config.getRulesDirectory()), JRuleConfig.RULES_PACKAGE, true);
+        compiler.loadClasses(loader, new File(config.getRuleClassesDirectory()), JRuleConfig.RULES_PACKAGE, true);
     }
 
     private void compileUserRules() {
